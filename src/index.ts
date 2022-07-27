@@ -1,10 +1,21 @@
-import { Observable } from 'rxjs';
+import { Observable, Subscriber } from "rxjs";
 
-const someObservable$ = new Observable<string>(subscriber => {
-  subscriber.next('Alice');
-  subscriber.next('Ben');
-  subscriber.next('Charlie');
-  subscriber.complete();
+const observable$ = new Observable<string>((subscriber) => {
+  subscriber.next("bruhmoment");
+  subscriber.next("maainn you done f'ed up");
+  subscriber.next("me oh my what do we have here");
 });
 
-someObservable$.subscribe(value => console.log(value));
+const observer = {
+  next: (val: string) => console.log(val),
+  err: (err: string) => console.log(err),
+};
+
+const observer1 = {
+  next: (val: string) => console.log("look at these values bruh", val),
+};
+
+const subscription = observable$.subscribe(observer);
+const subscription1 = observable$.subscribe(observer1);
+
+setTimeout(() => subscription.unsubscribe(), 3000);
