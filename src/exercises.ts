@@ -356,4 +356,5 @@ export default [
   exercise_14,
   exercise_15,
   exercise_16,
+  exercise_17,
 ];
