@@ -7,21 +7,27 @@ import {
   interval,
   forkJoin,
   combineLatest,
+  filter,
+  map,
 } from "rxjs";
 import callApi from "./helpers/callApi";
+
+/**
+ * * Observables
+ */
 
 // observables, observers & subscriptions
 const exercise_1 = () => {
   const observable$ = new Observable<number>((subscriber) => {
     let count: number = 0;
-    const interval = setInterval(() => {
+    const interv = setInterval(() => {
       console.log("emitted val", count);
 
       subscriber.next(count++);
     }, 2000);
 
     return () => {
-      clearInterval(interval);
+      clearInterval(interv);
     };
   });
 
@@ -67,6 +73,9 @@ const exercise_3 = () => {
     5000
   );
 };
+/**
+ * * Creation functions
+ */
 
 // of
 const exercise_4 = () => {
@@ -263,8 +272,72 @@ const exercise_14 = () => {
   });
 };
 
+/**
+ * * Pipeable operators
+ */
 // filter
-const exercise_15 = () => {};
+const exercise_15 = () => {
+  type Article = {
+    name: number;
+    type: string;
+  };
+
+  const newsArticles = [
+    {
+      name: 1,
+      type: "sports",
+    },
+    {
+      name: 2,
+      type: "clothing",
+    },
+    {
+      name: 3,
+      type: "clothing",
+    },
+    {
+      name: 4,
+      type: "sports",
+    },
+    {
+      name: 5,
+      type: "sports",
+    },
+    {
+      name: 6,
+      type: "sports",
+    },
+  ];
+
+  const newsArticles$ = from(newsArticles);
+
+  const sportsArticles = newsArticles$.pipe(
+    filter((article: Article) => article.type === "sports")
+  );
+
+  sportsArticles.subscribe((article) => console.log(article));
+};
+
+// map
+const exercise_16 = () => {
+  const randomName$ = callApi("/name/random_name", "GET");
+
+  const randomNation$ = callApi("/nation/random_nation", "GET");
+
+  const randomFood$ = callApi("/food/random_food", "GET");
+
+  forkJoin([randomName$, randomNation$, randomFood$])
+    .pipe(
+      map(
+        ([nameResponse, nationResponse, foodResponse]) =>
+          `${nameResponse.response.first_name} is from ${nationResponse.response.capital} and likes to eat ${foodResponse.response.dish}`
+      )
+    )
+    .subscribe((result) => console.log(result));
+};
+
+// tap
+const exercise_17 = () => {};
 
 export default [
   exercise_1,
@@ -281,5 +354,6 @@ export default [
   exercise_12,
   exercise_13,
   exercise_14,
-  exercise_15, 
+  exercise_15,
+  exercise_16,
 ];
