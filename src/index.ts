@@ -1,25 +1,13 @@
-import {
-  exercise_1,
-  exercise_2,
-  exercise_3,
-  exercise_4,
-  exercise_5,
-  exercise_6,
-  exercise_7,
-  exercise_8,
-  exercise_9,
-} from "./exercises";
+import exercises from "./exercises";
 
-const exerciseList = [
-  //exercise_1,
-  //exercise_2,
-  //exercise_3,
-  //exercise_4,
-  //exercise_5,
-  //exercise_6,
-  //exercise_7,
-  //exercise_8,
-  exercise_9,
-];
+if (!process.env.exercise)
+  throw new Error("please specify which exercise you want to execute");
 
-exerciseList.forEach((exercise) => exercise());
+const exerciseToDo = process.env.exercise;
+
+const functionToExecute = exercises.find((e) => e.name === exerciseToDo);
+
+if (!functionToExecute)
+  throw new Error("please specify which exercise you want to execute");
+
+functionToExecute();

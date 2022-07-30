@@ -1,8 +1,17 @@
-import { Observable, from, of, fromEvent, timer } from "rxjs";
+import {
+  Observable,
+  from,
+  of,
+  fromEvent,
+  timer,
+  interval,
+  forkJoin,
+  combineLatest,
+} from "rxjs";
 import callApi from "./helpers/callApi";
 
 // observables, observers & subscriptions
-export function exercise_1(): void {
+const exercise_1 = () => {
   const observable$ = new Observable<number>((subscriber) => {
     let count: number = 0;
     const interval = setInterval(() => {
@@ -21,10 +30,10 @@ export function exercise_1(): void {
   });
 
   setTimeout(() => observer.unsubscribe(), 7000);
-}
+};
 
 // Cold observables
-export function exercise_2() {
+const exercise_2 = () => {
   const randName$ = callApi("/name/random_name", "GET");
 
   randName$.subscribe((next) =>
@@ -38,10 +47,10 @@ export function exercise_2() {
   randName$.subscribe((next) =>
     console.log("Sub 4:", next.response.first_name)
   );
-}
+};
 
 // hot observables
-export function exercise_3() {
+const exercise_3 = () => {
   const button = document.querySelector("button#hello");
 
   const click$ = new Observable<MouseEvent>((subscriber) => {
@@ -57,10 +66,10 @@ export function exercise_3() {
       ),
     5000
   );
-}
+};
 
 // of
-export function exercise_4() {
+const exercise_4 = () => {
   const ourOwnOf = (...args: any) => {
     return new Observable((subscriber) => {
       args.forEach((arg: any) => subscriber.next(arg));
@@ -72,16 +81,16 @@ export function exercise_4() {
     next: (next) => console.log(next),
     complete: () => console.log("complete"),
   });
-}
+};
 // from array
-export function exercise_5() {
+const exercise_5 = () => {
   from([1, 2, 3, 4, 5]).subscribe({
     next: (val) => console.log(val),
     complete: () => console.log("complete"),
   });
-}
+};
 // from promise
-export function exercise_6() {
+const exercise_6 = () => {
   const somePromise = new Promise((resolve, reject) => reject("rejected"));
 
   const observableFromPromise$ = from(somePromise);
@@ -92,19 +101,19 @@ export function exercise_6() {
 
     complete: () => console.log("completed"),
   });
-}
+};
 
 // fromEvent
-export function exercise_7() {
+const exercise_7 = () => {
   const button = document.querySelector("button#hello");
 
   fromEvent(button, "click").subscribe({
     next: (val: MouseEvent) => console.log(val.type, val.x, val.y),
   });
-}
+};
 
-// fromEvent using new Observable
-export function exercise_8() {
+// recreate fromEvent with custom logic
+const exercise_8 = () => {
   const button = document.querySelector("button#hello");
 
   const trigger$ = new Observable((subscriber) => {
@@ -120,12 +129,157 @@ export function exercise_8() {
   const subscription = trigger$.subscribe((event) => console.log(event));
 
   setTimeout(() => subscription.unsubscribe(), 5000);
-}
+};
 
 // timer
-export function exercise_9() {
-  timer(2000).subscribe({
+const exercise_9 = () => {
+  const subscription = timer(2000).subscribe({
     next: (val) => console.log(val),
     complete: () => console.log("completed"),
   });
-}
+
+  setTimeout(() => {
+    subscription.unsubscribe();
+  }, 1000);
+};
+
+// recrerate timer with custom logic
+const exercise_10 = () => {
+  const timer$ = new Observable<number>((subscriber) => {
+    const timeout = setTimeout(() => {
+      console.log("Timeout");
+
+      subscriber.next(0);
+      subscriber.complete();
+    }, 2000);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  });
+
+  const subscription = timer$.subscribe({
+    next: (val) => console.log(val),
+    complete: () => console.log("complete"),
+  });
+
+  setTimeout(() => {
+    subscription.unsubscribe();
+    console.log("unsubscribing");
+  }, 1000);
+};
+
+// interval
+const exercise_11 = () => {
+  const intervalSubscription = interval(1000).subscribe({
+    next: (val) => console.log(val),
+    complete: () => console.log("completed"),
+  });
+
+  timer(3000).subscribe({
+    next: () => intervalSubscription.unsubscribe(),
+  });
+};
+
+// forkJoin
+const exercise_12 = () => {
+  const randomName$ = callApi("/name/random_name", "GET");
+
+  const randomNation$ = callApi("/nation/random_nation", "GET");
+
+  const randomFood$ = callApi("/food/random_food", "GET");
+
+  forkJoin([randomName$, randomNation$, randomFood$]).subscribe(
+    ([
+      {
+        response: { first_name },
+      },
+      {
+        response: { capital },
+      },
+      {
+        response: { dish },
+      },
+    ]) =>
+      console.log(`${first_name} is from ${capital} and likes to eat ${dish}`)
+  );
+};
+// forkJoin error
+const exercise_13 = () => {
+  const a$ = new Observable((subscriber) => {
+    setTimeout(() => {
+      subscriber.next("A");
+      subscriber.complete();
+    }, 5000);
+
+    return () => {
+      console.log("A teardown");
+    };
+  });
+
+  const b$ = new Observable((subscriber) => {
+    setTimeout(() => {
+      subscriber.error("failed");
+    }, 3000);
+
+    return () => {
+      console.log("B teardown");
+    };
+  });
+
+  forkJoin([a$, b$]).subscribe({
+    next: (o) => console.log(o),
+    error: (err) => console.log(err),
+  });
+};
+//combineLatest
+const exercise_14 = () => {
+  const convertTemperature = (temperature: string, conversionType: string) => {
+    switch (conversionType) {
+      case "f-to-c": {
+        return (parseInt(temperature) - 32) * 0.5556;
+      }
+      case "c-to-f": {
+        return parseInt(temperature) * 1.8 + 32;
+      }
+    }
+  };
+  const temperatureInput = document.getElementById("temperature-input");
+  const conversionDropdown = document.getElementById("conversion-dropdown");
+  const resultText = document.getElementById("result-text");
+
+  const temp$ = fromEvent(temperatureInput, "input");
+  const conversion$ = fromEvent(conversionDropdown, "change");
+
+  combineLatest<any>([temp$, conversion$]).subscribe({
+    next: ([input, dropdown]) => {
+      const convertedTemp = convertTemperature(
+        input.target.value,
+        dropdown.target.value
+      );
+
+      resultText.innerHTML = String(convertedTemp);
+    },
+  });
+};
+
+// filter
+const exercise_15 = () => {};
+
+export default [
+  exercise_1,
+  exercise_2,
+  exercise_3,
+  exercise_4,
+  exercise_5,
+  exercise_6,
+  exercise_7,
+  exercise_8,
+  exercise_9,
+  exercise_10,
+  exercise_11,
+  exercise_12,
+  exercise_13,
+  exercise_14,
+  exercise_15, 
+];
